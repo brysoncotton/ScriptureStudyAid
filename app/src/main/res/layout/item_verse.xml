@@ -1,9 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/tvVerseText"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:textSize="18sp"
-    android:lineSpacingExtra="4dp"
-    android:textColor="#212121" />
+    android:orientation="horizontal"
+    android:baselineAligned="false">
+
+    <TextView
+        android:id="@+id/tvVerseText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:textSize="18sp"
+        android:lineSpacingExtra="4dp"
+        android:textColor="#212121"
+        android:textIsSelectable="true" />
+
+    <FrameLayout
+        android:id="@+id/flNoteContainer"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:background="#FAFAFA" />
+
+</LinearLayout>

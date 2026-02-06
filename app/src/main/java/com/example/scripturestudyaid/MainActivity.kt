@@ -97,12 +97,21 @@ class MainActivity : BaseActivity() {
         val loadedData = JsonUtils.getScriptures(this, fileName)
         if (loadedData != null) {
             bibleData = loadedData
-            // If adapter exists, update it, otherwise create it
             if (::verseAdapter.isInitialized) {
-                 verseAdapter.updateVerses(bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses)
+                 verseAdapter.updateVerses(
+                    bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses,
+                    currentVolumeName,
+                    bibleData.books[currentBookIndex].book,
+                    bibleData.books[currentBookIndex].chapters[currentChapterIndex].chapter
+                 )
             } else {
                  val rvVerses = findViewById<RecyclerView>(R.id.rvVerses)
-                 verseAdapter = VerseAdapter(bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses)
+                 verseAdapter = VerseAdapter(
+                    bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses,
+                    currentVolumeName,
+                    bibleData.books[currentBookIndex].book,
+                    bibleData.books[currentBookIndex].chapters[currentChapterIndex].chapter
+                 )
                  rvVerses.adapter = verseAdapter
                  rvVerses.layoutManager = LinearLayoutManager(this)
             }
@@ -115,7 +124,12 @@ class MainActivity : BaseActivity() {
         chapterButton.text = "Chapter ${selectedChapter.chapter}"
 
         // Tell the list to show the new verses
-        verseAdapter.updateVerses(selectedChapter.verses)
+        verseAdapter.updateVerses(
+            selectedChapter.verses,
+            currentVolumeName,
+            bibleData.books[currentBookIndex].book,
+            selectedChapter.chapter
+        )
     }
 
 
