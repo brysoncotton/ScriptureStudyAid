@@ -43,12 +43,21 @@ class VerseAdapter(
             val start = highlight.startOne + textOffset
             val end = highlight.endOne + textOffset
             if (start >= 0 && end <= fullString.length && start < end) {
-                spannable.setSpan(
-                    android.text.style.BackgroundColorSpan(highlight.color),
-                    start,
-                    end,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+                if (highlight.type == "UNDERLINE") {
+                    spannable.setSpan(
+                        ColoredUnderlineSpan(highlight.color),
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                } else {
+                    spannable.setSpan(
+                        android.text.style.BackgroundColorSpan(highlight.color),
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
             }
         }
 

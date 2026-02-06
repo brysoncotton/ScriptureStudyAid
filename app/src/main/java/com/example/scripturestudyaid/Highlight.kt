@@ -12,5 +12,6 @@ data class Highlight(
     val verse: Int,
     val startOne: Int,
     val endOne: Int,
-    val color: Int
+    val color: Int,
+    val type: String = "SOLID" // "SOLID" or "UNDERLINE"
 )

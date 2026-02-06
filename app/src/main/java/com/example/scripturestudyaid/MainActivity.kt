@@ -6,7 +6,7 @@ import android.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class MainActivity : BaseActivity() {
+class MainActivity : BaseActivity(), HighlightBottomSheetFragment.OnHighlightOptionSelectedListener {
 
     private lateinit var bibleData: ScriptureResponse
     private lateinit var verseAdapter: VerseAdapter
@@ -142,19 +142,39 @@ class MainActivity : BaseActivity() {
         verseAdapter.updateData(currentChapter.verses, highlights)
     }
 
+    private var pendingHighlightVerse: Verse? = null
+    private var pendingHighlightStart: Int = 0
+    private var pendingHighlightEnd: Int = 0
+
     private fun onHighlightSelected(verse: Verse, start: Int, end: Int) {
+        pendingHighlightVerse = verse
+        pendingHighlightStart = start
+        pendingHighlightEnd = end
+
+        val bottomSheet = HighlightBottomSheetFragment()
+        bottomSheet.setListener(this)
+        bottomSheet.show(supportFragmentManager, HighlightBottomSheetFragment.TAG)
+    }
+
+    override fun onHighlightOptionSelected(color: Int, type: String) {
+        val verse = pendingHighlightVerse ?: return
         val currentBook = bibleData.books[currentBookIndex]
         val currentChapter = currentBook.chapters[currentChapterIndex]
+        
         val highlight = Highlight(
             volume = currentVolumeName,
             book = currentBook.book,
             chapter = currentChapter.chapter,
             verse = verse.verse,
-            startOne = start,
-            endOne = end,
-            color = android.graphics.Color.YELLOW // Default highlight color
+            startOne = pendingHighlightStart,
+            endOne = pendingHighlightEnd,
+            color = color,
+            type = type
         )
         database.highlightDao().insert(highlight)
         updateContent()
+        
+        // Reset pending
+        pendingHighlightVerse = null
     }
 }

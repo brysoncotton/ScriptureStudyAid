@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Highlight::class], version = 1)
+@Database(entities = [Highlight::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun highlightDao(): HighlightDao
 
@@ -19,7 +19,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "scripture_study_database"
-                ).allowMainThreadQueries() // Allowing main thread queries for simplicity as requested, but ideally should be async.
+                )
+                .fallbackToDestructiveMigration()
+                .allowMainThreadQueries() // Allowing main thread queries for simplicity as requested, but ideally should be async.
                 .build()
                 INSTANCE = instance
                 instance
