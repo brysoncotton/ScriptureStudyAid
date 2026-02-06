@@ -30,14 +30,3 @@ data class DcSection(
     val reference: String,
     val verses: List<Verse>
 )
-
-data class Highlight(
-    val id: Int,
-    val verse: Int,
-    val type: String,
-    val startOne: Int,
-    val endOne: Int,
-    val color: Int,
-    val note: String,
-    val date: String
-)
