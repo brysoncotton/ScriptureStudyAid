@@ -24,9 +24,13 @@ class MainActivity : BaseActivity() {
 
     private var currentVolumeName = "Book of Mormon"
 
+    private lateinit var database: AppDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        database = AppDatabase.getDatabase(this)
 
         val btnSelectVolume = findViewById<Button>(R.id.btnSelectVolume)
         val btnSelectBook = findViewById<Button>(R.id.btnSelectBook)
@@ -99,10 +103,19 @@ class MainActivity : BaseActivity() {
             bibleData = loadedData
             // If adapter exists, update it, otherwise create it
             if (::verseAdapter.isInitialized) {
-                 verseAdapter.updateVerses(bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses)
+                 updateContent()
             } else {
                  val rvVerses = findViewById<RecyclerView>(R.id.rvVerses)
-                 verseAdapter = VerseAdapter(bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses)
+                 val currentBook = bibleData.books[currentBookIndex]
+                 val currentChapter = currentBook.chapters[currentChapterIndex]
+                 val highlights = database.highlightDao().getHighlightsForChapter(
+                     currentVolumeName,
+                     currentBook.book,
+                     currentChapter.chapter
+                 )
+                 
+                 verseAdapter = VerseAdapter(currentChapter.verses, ::onHighlightSelected)
+                 verseAdapter.updateData(currentChapter.verses, highlights)
                  rvVerses.adapter = verseAdapter
                  rvVerses.layoutManager = LinearLayoutManager(this)
             }
@@ -115,8 +128,33 @@ class MainActivity : BaseActivity() {
         chapterButton.text = "Chapter ${selectedChapter.chapter}"
 
         // Tell the list to show the new verses
-        verseAdapter.updateVerses(selectedChapter.verses)
+        updateContent()
     }
 
+    private fun updateContent() {
+        val currentBook = bibleData.books[currentBookIndex]
+        val currentChapter = currentBook.chapters[currentChapterIndex]
+        val highlights = database.highlightDao().getHighlightsForChapter(
+            currentVolumeName,
+            currentBook.book,
+            currentChapter.chapter
+        )
+        verseAdapter.updateData(currentChapter.verses, highlights)
+    }
 
+    private fun onHighlightSelected(verse: Verse, start: Int, end: Int) {
+        val currentBook = bibleData.books[currentBookIndex]
+        val currentChapter = currentBook.chapters[currentChapterIndex]
+        val highlight = Highlight(
+            volume = currentVolumeName,
+            book = currentBook.book,
+            chapter = currentChapter.chapter,
+            verse = verse.verse,
+            startOne = start,
+            endOne = end,
+            color = android.graphics.Color.YELLOW // Default highlight color
+        )
+        database.highlightDao().insert(highlight)
+        updateContent()
+    }
 }
