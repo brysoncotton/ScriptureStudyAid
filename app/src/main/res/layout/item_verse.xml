@@ -6,4 +6,5 @@
     android:padding="8dp"
     android:textSize="18sp"
     android:lineSpacingExtra="4dp"
-    android:textColor="#212121" />
+    android:textColor="#212121"
+    android:textIsSelectable="true" />

@@ -3,6 +3,8 @@ package com.example.scripturestudyaid
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+// The user was receiving a "no such table" error from KSP.
+// By adding this comment, we are forcing KSP to re-process this file.
 @Entity(tableName = "highlights")
 data class Highlight(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,

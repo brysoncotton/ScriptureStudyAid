@@ -8,22 +8,38 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.GridLayout
-import android.widget.RadioButton
 import android.widget.RadioGroup
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.slider.RangeSlider
 
 class HighlightBottomSheetFragment : BottomSheetDialogFragment() {
 
     interface OnHighlightOptionSelectedListener {
-        fun onHighlightOptionSelected(color: Int, type: String)
+        fun onHighlightOptionSelected(color: Int, type: String, start: Int, end: Int)
+        fun onSliderValueChanged(start: Int, end: Int)
+        fun onHighlightDeleted()
     }
 
     private var listener: OnHighlightOptionSelectedListener? = null
     private var selectedColor: Int = Color.YELLOW
     private var selectedType: String = "SOLID"
+    private var initialStart: Int = 0
+    private var initialEnd: Int = 0
+    private var maxRange: Int = 100
+    private var isEditMode: Boolean = false
 
     fun setListener(listener: OnHighlightOptionSelectedListener) {
         this.listener = listener
+    }
+
+    fun setInitialRange(start: Int, end: Int, max: Int) {
+        this.initialStart = start
+        this.initialEnd = end
+        this.maxRange = max
+    }
+
+    fun setEditMode(isEdit: Boolean) {
+        this.isEditMode = isEdit
     }
 
     override fun onCreateView(
@@ -42,6 +58,26 @@ class HighlightBottomSheetFragment : BottomSheetDialogFragment() {
         val colorWheel = view.findViewById<ColorWheelView>(R.id.colorWheel)
         val btnSave = view.findViewById<Button>(R.id.btnSave)
         val btnCancel = view.findViewById<Button>(R.id.btnCancel)
+        val btnDelete = view.findViewById<Button>(R.id.btnDelete)
+        val rangeSlider = view.findViewById<RangeSlider>(R.id.rangeSlider)
+
+        btnDelete.visibility = if (isEditMode) View.VISIBLE else View.GONE
+
+        // Configure Slider
+        rangeSlider.valueFrom = 0f
+        rangeSlider.valueTo = maxRange.toFloat()
+        rangeSlider.values = listOf(initialStart.toFloat(), initialEnd.toFloat())
+        
+        rangeSlider.addOnChangeListener { slider, _, fromUser ->
+            if (fromUser) {
+                val values = slider.values
+                val start = values[0].toInt()
+                val end = values[1].toInt()
+                listener?.onSliderValueChanged(start, end)
+                initialStart = start
+                initialEnd = end
+            }
+        }
 
         // Type Selection
         rgHighlightType.setOnCheckedChangeListener { _, checkedId ->
@@ -86,11 +122,16 @@ class HighlightBottomSheetFragment : BottomSheetDialogFragment() {
 
         // Action Buttons
         btnSave.setOnClickListener {
-            listener?.onHighlightOptionSelected(selectedColor, selectedType)
+            listener?.onHighlightOptionSelected(selectedColor, selectedType, initialStart, initialEnd)
             dismiss()
         }
 
         btnCancel.setOnClickListener {
+            dismiss()
+        }
+        
+        btnDelete.setOnClickListener {
+            listener?.onHighlightDeleted()
             dismiss()
         }
     }

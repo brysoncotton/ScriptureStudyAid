@@ -1,5 +1,6 @@
 package com.example.scripturestudyaid
 
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.PopupMenu
@@ -114,7 +115,8 @@ class MainActivity : BaseActivity(), HighlightBottomSheetFragment.OnHighlightOpt
                      currentChapter.chapter
                  )
                  
-                 verseAdapter = VerseAdapter(currentChapter.verses, ::onHighlightSelected)
+                 verseAdapter = VerseAdapter(currentChapter.verses)
+                 verseAdapter.setOnVerseInteractionListener(::onVerseInteraction)
                  verseAdapter.updateData(currentChapter.verses, highlights)
                  rvVerses.adapter = verseAdapter
                  rvVerses.layoutManager = LinearLayoutManager(this)
@@ -143,38 +145,98 @@ class MainActivity : BaseActivity(), HighlightBottomSheetFragment.OnHighlightOpt
     }
 
     private var pendingHighlightVerse: Verse? = null
-    private var pendingHighlightStart: Int = 0
-    private var pendingHighlightEnd: Int = 0
+    private var isEditMode: Boolean = false
+    private var editingHighlight: Highlight? = null
 
-    private fun onHighlightSelected(verse: Verse, start: Int, end: Int) {
-        pendingHighlightVerse = verse
-        pendingHighlightStart = start
-        pendingHighlightEnd = end
+    // Called when user touches a verse
+    private fun onVerseInteraction(verse: Verse, existingHighlight: Highlight?) {
+        this.pendingHighlightVerse = verse
+        this.editingHighlight = existingHighlight
+        this.isEditMode = existingHighlight != null
 
         val bottomSheet = HighlightBottomSheetFragment()
         bottomSheet.setListener(this)
+        bottomSheet.setEditMode(isEditMode)
+
+        val textLength = verse.text.length
+        
+        if (isEditMode) {
+            // For editing, set range to existing highlight (adjusting for verse number prefix if stored relative to full string, 
+            // but our Model stores relative to text content, so simple mapping)
+            bottomSheet.setInitialRange(existingHighlight!!.startOne, existingHighlight.endOne, textLength)
+        } else {
+            // For new, default to full verse or some initial range
+            bottomSheet.setInitialRange(0, textLength, textLength)
+            // Show initial preview
+            updatePreview(verse, 0, textLength, Color.YELLOW, "SOLID")
+        }
+        
         bottomSheet.show(supportFragmentManager, HighlightBottomSheetFragment.TAG)
     }
+    
+    // Updates the adapter's preview highlight
+    private fun updatePreview(verse: Verse, start: Int, end: Int, color: Int = Color.YELLOW, type: String = "SOLID") {
+        val preview = Highlight(
+             volume = currentVolumeName,
+             book = bibleData.books[currentBookIndex].book,
+             chapter = bibleData.books[currentBookIndex].chapters[currentChapterIndex].chapter,
+             verse = verse.verse,
+             startOne = start,
+             endOne = end,
+             color = color,
+             type = type
+        )
+        verseAdapter.setPreviewHighlight(preview)
+    }
 
-    override fun onHighlightOptionSelected(color: Int, type: String) {
+    override fun onSliderValueChanged(start: Int, end: Int) {
+        val verse = pendingHighlightVerse ?: return
+        // Use current color/type if available, or defaults. 
+        // ideally we track current state in fragment and pass back, or track here.
+        // For simplicity, defaulting to Edit highlight's props or defaults
+        val color = editingHighlight?.color ?: Color.YELLOW
+        val type = editingHighlight?.type ?: "SOLID"
+        updatePreview(verse, start, end, color, type)
+    }
+
+    override fun onHighlightOptionSelected(color: Int, type: String, start: Int, end: Int) {
         val verse = pendingHighlightVerse ?: return
         val currentBook = bibleData.books[currentBookIndex]
         val currentChapter = currentBook.chapters[currentChapterIndex]
+        
+        // If editing, delete original first (replace operation)
+        if (editingHighlight != null) {
+            database.highlightDao().delete(editingHighlight!!)
+        }
         
         val highlight = Highlight(
             volume = currentVolumeName,
             book = currentBook.book,
             chapter = currentChapter.chapter,
             verse = verse.verse,
-            startOne = pendingHighlightStart,
-            endOne = pendingHighlightEnd,
+            startOne = start,
+            endOne = end,
             color = color,
             type = type
         )
         database.highlightDao().insert(highlight)
+        
+        // Clear preview and reload
+        verseAdapter.setPreviewHighlight(null)
         updateContent()
         
         // Reset pending
         pendingHighlightVerse = null
+        editingHighlight = null
+    }
+    
+    override fun onHighlightDeleted() {
+        if (editingHighlight != null) {
+            database.highlightDao().delete(editingHighlight!!)
+            verseAdapter.setPreviewHighlight(null)
+            updateContent()
+        }
+        pendingHighlightVerse = null
+        editingHighlight = null
     }
 }
