@@ -83,4 +83,15 @@
         android:scaleType="centerInside"
         android:padding="8dp" />
 
+    <ImageButton
+        android:id="@+id/btnDefine"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:src="@drawable/ic_define"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Define Word"
+        android:scaleType="centerInside"
+        android:padding="8dp" />
+
 </LinearLayout>

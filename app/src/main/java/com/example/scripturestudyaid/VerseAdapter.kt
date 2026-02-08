@@ -293,6 +293,18 @@ class VerseAdapter(
             actionMode?.finish()
         }
 
+        // Define button
+        popupView.findViewById<ImageButton>(R.id.btnDefine).setOnClickListener {
+            val currentStart = holder.tvVerseText.selectionStart
+            val currentEnd = holder.tvVerseText.selectionEnd
+            if (currentStart != -1 && currentEnd != -1 && currentStart != currentEnd) {
+                val word = holder.tvVerseText.text.subSequence(currentStart, currentEnd).toString().trim()
+                popupWindow.dismiss()
+                showDefinition(context, word)
+                actionMode?.finish()
+            }
+        }
+
         // Delete button
         popupView.findViewById<ImageButton>(R.id.btnDelete).setOnClickListener {
             popupWindow.dismiss()
@@ -1217,3 +1229,63 @@ class VerseAdapter(
         }
     }
 }
+
+    // Dictionary lookup methods
+    private fun showDefinition(context: Context, word: String) {
+        try {
+            val jsonString = context.assets.open("dictionary_webster1828.json").bufferedReader().use { it.readText() }
+            val jsonArray = org.json.JSONArray(jsonString)
+            
+            // Clean the word for lookup (remove punctuation, lowercase)
+            val cleanWord = word.replace(Regex("[^a-zA-Z]"), "").lowercase()
+            
+            // Try to find the exact word first
+            var definition: String? = null
+            for (i in 0 until jsonArray.length()) {
+                val entry = jsonArray.getJSONObject(i)
+                if (entry.getString("word").equals(cleanWord, ignoreCase = true)) {
+                    definition = entry.getString("definition")
+                    break
+                }
+            }
+            
+            // If not found, try without common suffixes
+            if (definition == null) {
+                val variations = listOf(
+                    cleanWord,
+                    cleanWord.removeSuffix("s"),  // plural
+                    cleanWord.removeSuffix("es"), // plural
+                    cleanWord.removeSuffix("ed"), // past tense
+                    cleanWord.removeSuffix("ing"), // present participle
+                    cleanWord.removeSuffix("ly")  // adverb
+                )
+                
+                for (variation in variations) {
+                    for (i in 0 until jsonArray.length()) {
+                        val entry = jsonArray.getJSONObject(i)
+                        if (entry.getString("word").equals(variation, ignoreCase = true)) {
+                            definition = entry.getString("definition")
+                            break
+                        }
+                    }
+                    if (definition != null) break
+                }
+            }
+            
+            if (definition != null) {
+                showDefinitionDialog(context, word, definition)
+            } else {
+                Toast.makeText(context, "Definition not found for '$word'", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Error loading dictionary: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun showDefinitionDialog(context: Context, word: String, definition: String) {
+        AlertDialog.Builder(context)
+            .setTitle("1828 Dictionary: $word")
+            .setMessage(definition)
+            .setPositiveButton("Close", null)
+            .show()
+    }
