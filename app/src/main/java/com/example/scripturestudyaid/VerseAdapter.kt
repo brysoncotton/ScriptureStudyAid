@@ -31,11 +31,28 @@ class VerseAdapter(
     private var chapterNum: Int = 0
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
+    private var allVerses: List<Verse> = verses
+    private var filteredVerses: List<Verse> = verses
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvVerseText: TextView = view.findViewById(R.id.tvVerseText)
         val flNoteContainer: FrameLayout = view.findViewById(R.id.flNoteContainer)
         var actionPopup: PopupWindow? = null // Track popup to prevent orphaned instances
     }
+
+    fun filterVerses(query: String) {
+        filteredVerses = if (query.isEmpty()) {
+            allVerses
+        } else {
+            allVerses.filter { verse ->
+                verse.text.contains(query, ignoreCase = true) ||
+                verse.verse.toString().contains(query)
+            }
+        }
+        notifyDataSetChanged()
+    }
+
+    override fun getItemCount(): Int = filteredVerses.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_verse, parent, false)
@@ -43,7 +60,7 @@ class VerseAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val verse = verses[position]
+        val verse = filteredVerses[position]
         val context = holder.itemView.context
         val fullString = "${verse.verse} ${verse.text}"
         val spannable = SpannableString(fullString)
@@ -559,10 +576,10 @@ class VerseAdapter(
     }
 
 
-    override fun getItemCount() = verses.size
-
     fun updateVerses(newVerses: List<Verse>, volume: String, book: String, chapter: Int) {
         this.verses = newVerses
+        this.allVerses = newVerses
+        this.filteredVerses = newVerses
         this.volumeName = volume
         this.bookName = book
         this.chapterNum = chapter
