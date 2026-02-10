@@ -21,15 +21,48 @@ class CustomComparisonEditorActivity : AppCompatActivity() {
     
     private lateinit var adapter: CustomComparisonEditorAdapter
     private val pairs = mutableListOf<CustomComparisonPair>()
+    private var editingComparisonId: String? = null
     
     private var pendingPosition = -1
     private var pendingIsLeft = true
+    
+    // Track context for next selection (LEFT)
+    private var leftLastVolume: String? = null
+    private var leftLastBook: String? = null
+    private var leftLastChapter: Int? = null
+    private var leftLastVerse: Int? = null
+
+    // Track context for next selection (RIGHT)
+    private var rightLastVolume: String? = null
+    private var rightLastBook: String? = null
+    private var rightLastChapter: Int? = null
+    private var rightLastVerse: Int? = null
 
     private val selectorLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val text = result.data?.getStringExtra("verse_text")
             val ref = result.data?.getStringExtra("verse_ref")
             
+            // Capture return context if available
+            val rVol = result.data?.getStringExtra("return_volume")
+            val rBook = result.data?.getStringExtra("return_book")
+            val rChap = result.data?.getIntExtra("return_chapter", -1)
+            val rVerse = result.data?.getIntExtra("return_verse", -1)
+            
+            if (rVol != null && rBook != null && rChap != null && rChap != -1) {
+                if (pendingIsLeft) {
+                    leftLastVolume = rVol
+                    leftLastBook = rBook
+                    leftLastChapter = rChap
+                    leftLastVerse = rVerse
+                } else {
+                    rightLastVolume = rVol
+                    rightLastBook = rBook
+                    rightLastChapter = rChap
+                    rightLastVerse = rVerse
+                }
+            }
+
             if (text != null && ref != null && pendingPosition != -1) {
                 val pair = pairs[pendingPosition]
                 if (pendingIsLeft) {
@@ -59,8 +92,18 @@ class CustomComparisonEditorActivity : AppCompatActivity() {
             insets
         }
 
-        // Initialize with one empty row
-        pairs.add(CustomComparisonPair(CustomComparisonItem(), CustomComparisonItem()))
+        // Initialize with one empty row OR load existing
+        val comparisonId = intent.getStringExtra("comparison_id")
+        if (comparisonId != null) {
+            editingComparisonId = comparisonId
+            val title = loadComparisonData(comparisonId)
+            if (title != null) {
+                etTitle.setText(title)
+                btnSave.text = "Update Comparison"
+            }
+        } else {
+            pairs.add(CustomComparisonPair(CustomComparisonItem(), CustomComparisonItem()))
+        }
 
         adapter = CustomComparisonEditorAdapter(
             pairs,
@@ -68,6 +111,28 @@ class CustomComparisonEditorActivity : AppCompatActivity() {
                 pendingPosition = position
                 pendingIsLeft = isLeft
                 val intent = Intent(this, VerseSelectorActivity::class.java)
+                
+                // Pass context based on which side was clicked
+                if (isLeft) {
+                    if (leftLastVolume != null) intent.putExtra("initial_volume", leftLastVolume)
+                    if (leftLastBook != null) intent.putExtra("initial_book", leftLastBook)
+                    if (leftLastChapter != null) intent.putExtra("initial_chapter", leftLastChapter)
+                    if (leftLastVerse != null) intent.putExtra("initial_verse", leftLastVerse)
+                } else {
+                    if (rightLastVolume != null) intent.putExtra("initial_volume", rightLastVolume)
+                    if (rightLastBook != null) intent.putExtra("initial_book", rightLastBook)
+                    if (rightLastChapter != null) intent.putExtra("initial_chapter", rightLastChapter)
+                    if (rightLastVerse != null) intent.putExtra("initial_verse", rightLastVerse)
+                }
+                
+                // Collect all currently selected verse references
+                val preselectedRefs = ArrayList<String>()
+                for (pair in pairs) {
+                    if (pair.left.verseReference.isNotEmpty()) preselectedRefs.add(pair.left.verseReference)
+                    if (pair.right.verseReference.isNotEmpty()) preselectedRefs.add(pair.right.verseReference)
+                }
+                intent.putStringArrayListExtra("preselected_refs", preselectedRefs)
+                
                 selectorLauncher.launch(intent)
             },
             onDeleteRowClick = { position ->
@@ -104,6 +169,18 @@ class CustomComparisonEditorActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadComparisonData(id: String): String? {
+        val comparisons = CustomComparisonRepository.getComparisons(this)
+        val comparison = comparisons.find { it.id == id } ?: return null
+        
+        pairs.clear()
+        // We need to map back from source/text. 
+        // Although CustomComparisonItem matches what we need, the repository loads them.
+        // We just need to ensure our internal 'pairs' list is populated.
+        pairs.addAll(comparison.pairs)
+        return comparison.title
+    }
+
     private fun saveComparison() {
         val title = etTitle.text.toString().trim()
         if (title.isEmpty()) {
@@ -126,13 +203,13 @@ class CustomComparisonEditorActivity : AppCompatActivity() {
         }.toMutableList()
 
         val comparison = CustomComparison(
-            id = UUID.randomUUID().toString(),
+            id = editingComparisonId ?: UUID.randomUUID().toString(),
             title = title,
             pairs = finalPairs
         )
 
         CustomComparisonRepository.saveComparison(this, comparison)
-        Toast.makeText(this, "Comparison Saved", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, if (editingComparisonId != null) "Comparison Updated" else "Comparison Saved", Toast.LENGTH_SHORT).show()
         finish()
     }
 }

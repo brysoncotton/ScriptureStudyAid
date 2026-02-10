@@ -547,45 +547,92 @@ class MainActivity : BaseActivity() {
     }
     
     private fun goToNextChapter() {
-        // Try to go to next chapter in current book
-        if (currentChapterIndex < bibleData.books[currentBookIndex].chapters.size - 1) {
-            currentChapterIndex++
-        } else if (currentBookIndex < bibleData.books.size - 1) {
-            // Go to first chapter of next book
-            currentBookIndex++
-            currentChapterIndex = 0
-        } else {
+        // Check if next chapter exists
+        val canGoNext = (currentChapterIndex < bibleData.books[currentBookIndex].chapters.size - 1) || 
+                        (currentBookIndex < bibleData.books.size - 1)
+        
+        if (!canGoNext) {
             Toast.makeText(this, "Last chapter in ${currentVolumeName}", Toast.LENGTH_SHORT).show()
             return
         }
+
+        val rvVerses = findViewById<RecyclerView>(R.id.rvVerses)
+        val width = rvVerses.width.toFloat()
         
-        val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
-        val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
-        updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
-        
-        // Scroll to top
-        findViewById<RecyclerView>(R.id.rvVerses).scrollToPosition(0)
+        // Slide out to Left
+        rvVerses.animate()
+            .translationX(-width)
+            .alpha(0f)
+            .setDuration(150)
+            .withEndAction {
+                // Update indices
+                if (currentChapterIndex < bibleData.books[currentBookIndex].chapters.size - 1) {
+                    currentChapterIndex++
+                } else if (currentBookIndex < bibleData.books.size - 1) {
+                    currentBookIndex++
+                    currentChapterIndex = 0
+                }
+                
+                // Update UI
+                val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+                val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+                updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+                
+                // Reset for Slide in from Right
+                rvVerses.translationX = width
+                rvVerses.scrollToPosition(0)
+                
+                rvVerses.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start()
+            }
+            .start()
     }
     
     private fun goToPreviousChapter() {
-        // Try to go to previous chapter in current book
-        if (currentChapterIndex > 0) {
-            currentChapterIndex--
-        } else if (currentBookIndex > 0) {
-            // Go to last chapter of previous book
-            currentBookIndex--
-            currentChapterIndex = bibleData.books[currentBookIndex].chapters.size - 1
-        } else {
+        // Check if previous chapter exists
+        val canGoPrev = (currentChapterIndex > 0) || (currentBookIndex > 0)
+        
+        if (!canGoPrev) {
             Toast.makeText(this, "First chapter in ${currentVolumeName}", Toast.LENGTH_SHORT).show()
             return
         }
+
+        val rvVerses = findViewById<RecyclerView>(R.id.rvVerses)
+        val width = rvVerses.width.toFloat()
         
-        val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
-        val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
-        updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
-        
-        // Scroll to top
-        findViewById<RecyclerView>(R.id.rvVerses).scrollToPosition(0)
+        // Slide out to Right
+        rvVerses.animate()
+            .translationX(width)
+            .alpha(0f)
+            .setDuration(150)
+            .withEndAction {
+                // Update indices
+                if (currentChapterIndex > 0) {
+                    currentChapterIndex--
+                } else if (currentBookIndex > 0) {
+                    currentBookIndex--
+                    currentChapterIndex = bibleData.books[currentBookIndex].chapters.size - 1
+                }
+                
+                // Update UI
+                val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+                val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+                updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+                
+                // Reset for Slide in from Left
+                rvVerses.translationX = -width
+                rvVerses.scrollToPosition(0)
+                
+                rvVerses.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start()
+            }
+            .start()
     }
 
     data class SearchResult(val volume: String, val book: String, val chapter: Int, val verse: Int, val verseText: String)

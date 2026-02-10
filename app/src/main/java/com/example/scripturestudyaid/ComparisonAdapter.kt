@@ -32,10 +32,14 @@ class ComparisonAdapter(
         if (item.source1Verse.isNotEmpty()) {
             holder.tvSource1Verse.visibility = View.VISIBLE
             val text = item.source1Verse
-            if (text.startsWith(source1Name, ignoreCase = true)) {
-                holder.tvSource1Verse.text = text
+            if (source1Name.isNotEmpty()) {
+                if (text.startsWith(source1Name, ignoreCase = true)) {
+                    holder.tvSource1Verse.text = text
+                } else {
+                    holder.tvSource1Verse.text = "$source1Name $text"
+                }
             } else {
-                holder.tvSource1Verse.text = "$source1Name $text"
+                holder.tvSource1Verse.text = text
             }
         } else {
             holder.tvSource1Verse.visibility = View.GONE
@@ -46,10 +50,14 @@ class ComparisonAdapter(
         if (item.source2Verse.isNotEmpty()) {
             holder.tvSource2Verse.visibility = View.VISIBLE
             val text = item.source2Verse
-            if (text.startsWith(source2Name, ignoreCase = true)) {
-                holder.tvSource2Verse.text = text
+            if (source2Name.isNotEmpty()) {
+                if (text.startsWith(source2Name, ignoreCase = true)) {
+                    holder.tvSource2Verse.text = text
+                } else {
+                    holder.tvSource2Verse.text = "$source2Name $text"
+                }
             } else {
-                holder.tvSource2Verse.text = "$source2Name $text"
+                holder.tvSource2Verse.text = text
             }
         } else {
             holder.tvSource2Verse.visibility = View.GONE

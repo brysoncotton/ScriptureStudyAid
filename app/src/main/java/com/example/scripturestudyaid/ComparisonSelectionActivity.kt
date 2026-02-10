@@ -30,21 +30,23 @@ class ComparisonSelectionActivity : BaseActivity() {
         adapter = CustomComparisonListAdapter(emptyList(), 
             onItemClick = { comparison ->
                 // Launch Viewer for Custom Comparison
-                // For custom comparisons, we need to pass the ID or the object itself
-                // Since the viewer expects a filename for standard ones, we might need to adjust logic
-                // For now, let's assume we pass the ID and the viewer loads it
                 val intent = Intent(this, CreationComparisonActivity::class.java)
                 val config = ComparisonConfig(
                      title = comparison.title,
-                     filename = "", // Empty filename indicates custom? Or we use a special prefix?
-                     source1Name = "Left", // Dynamic?
-                     source2Name = "Right",
-                     customComparisonId = comparison.id // Need to add this to ComparisonConfig
+                     filename = "", 
+                     source1Name = "", 
+                     source2Name = "",
+                     customComparisonId = comparison.id
                 )
                 intent.putExtra("config", config)
                 startActivity(intent)
             },
-            onItemLongClick = { comparison ->
+            onItemEditClick = { comparison ->
+                val intent = Intent(this, CustomComparisonEditorActivity::class.java)
+                intent.putExtra("comparison_id", comparison.id)
+                startActivity(intent)
+            },
+            onItemDeleteClick = { comparison ->
                 showDeleteDialog(comparison)
             }
         )

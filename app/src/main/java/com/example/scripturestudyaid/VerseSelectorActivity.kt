@@ -64,8 +64,35 @@ class VerseSelectorActivity : BaseActivity(), NavigationView.OnNavigationItemSel
 
         rvVerses.layoutManager = LinearLayoutManager(this)
 
-        // Initial Load (Default to Book of Mormon or first available)
-        loadScriptures("Book of Mormon")
+        // Check for invalid context from intent (sometimes book names coming from text might not match JSON)
+        val initialVolume = intent.getStringExtra("initial_volume") ?: "Book of Mormon"
+        val initialBook = intent.getStringExtra("initial_book")
+        val initialChapter = intent.getIntExtra("initial_chapter", -1)
+        val initialVerse = intent.getIntExtra("initial_verse", -1)
+        val preselectedRefs = intent.getStringArrayListExtra("preselected_refs") ?: arrayListOf()
+
+        loadScriptures(initialVolume)
+
+        if (initialBook != null && initialChapter != -1) {
+            // Find and set book
+            val book = scriptureData?.books?.find { it.book == initialBook }
+            if (book != null) {
+                currentBook = book
+                // Validate chapter index (chapterNum - 1)
+                if (initialChapter > 0 && initialChapter <= book.chapters.size) {
+                    currentChapterIndex = initialChapter - 1
+                }
+                
+                updateDisplay()
+                
+                // Scroll to verse if provided
+                if (initialVerse != -1) {
+                    rvVerses.post {
+                        (rvVerses.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(initialVerse - 1, 0)
+                    }
+                }
+            }
+        }
         
         // btnConfirmSelection.setOnClickListener { ... } // Removed for immediate selection
         // btnConfirmSelection.isEnabled = false
@@ -166,7 +193,9 @@ class VerseSelectorActivity : BaseActivity(), NavigationView.OnNavigationItemSel
             chapter.verses,
             volumeName = currentVolume,
             bookName = book.book,
-            chapterNum = chapter.chapter
+            chapterNum = chapter.chapter,
+            preselectedVerses = intent.getStringArrayListExtra("preselected_refs") ?: emptyList(),
+            isComparisonMode = true
         )
         
         adapter?.setSelectionMode(true) { verse ->
@@ -174,6 +203,13 @@ class VerseSelectorActivity : BaseActivity(), NavigationView.OnNavigationItemSel
                 val resultIntent = Intent()
                 resultIntent.putExtra("verse_text", verse.text)
                 resultIntent.putExtra("verse_ref", "${currentBook?.book} ${currentChapterIndex + 1}:${verse.verse}")
+                
+                // Return current context
+                resultIntent.putExtra("return_volume", currentVolume)
+                resultIntent.putExtra("return_book", currentBook?.book)
+                resultIntent.putExtra("return_chapter", currentChapterIndex + 1)
+                resultIntent.putExtra("return_verse", verse.verse)
+                
                 setResult(RESULT_OK, resultIntent)
                 finish()
             }

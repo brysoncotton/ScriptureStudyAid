@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="8dp"
-    android:baselineAligned="false">
+    android:baselineAligned="false"
+    android:background="?attr/selectableItemBackground">
 
     <!-- Source 1 (Left) -->
     <LinearLayout

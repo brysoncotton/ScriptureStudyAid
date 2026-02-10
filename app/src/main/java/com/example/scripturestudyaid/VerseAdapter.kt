@@ -28,14 +28,25 @@ class VerseAdapter(
     private var verses: List<Verse>,
     private var volumeName: String = "",
     private var bookName: String = "",
-    private var chapterNum: Int = 0
+    private var chapterNum: Int = 0,
+    private var preselectedVerses: List<String> = emptyList(),
+    private var isComparisonMode: Boolean = false
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
     private var allVerses: List<Verse> = verses
     private var filteredVerses: List<Verse> = verses
 
+    companion object {
+        private const val VIEW_TYPE_READING = 0
+        private const val VIEW_TYPE_COMPARISON = 1
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (isComparisonMode) VIEW_TYPE_COMPARISON else VIEW_TYPE_READING
+    }
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val cardVerse: com.google.android.material.card.MaterialCardView = view.findViewById(R.id.cardVerse)
+        val cardVerse: com.google.android.material.card.MaterialCardView? = view.findViewById(R.id.cardVerse)
         val tvVerseText: TextView = view.findViewById(R.id.tvVerseText)
         val flNoteContainer: FrameLayout = view.findViewById(R.id.flNoteContainer)
         var actionPopup: PopupWindow? = null // Track popup to prevent orphaned instances
@@ -71,7 +82,8 @@ class VerseAdapter(
     override fun getItemCount(): Int = filteredVerses.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_verse, parent, false)
+        val layoutId = if (viewType == VIEW_TYPE_COMPARISON) R.layout.item_verse else R.layout.item_verse_reading
+        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
         return ViewHolder(view)
     }
 
@@ -83,14 +95,23 @@ class VerseAdapter(
             // --- SELECTION MODE ---
             
             // 1. Bubble Highlight (Stroke Change on Card)
+            val verseRef = "$bookName $chapterNum:${verse.verse}"
+            
             if (verse.verse == selectedVerseRef) {
-                holder.cardVerse.strokeColor = Color.parseColor("#00BCD4") // Cyan
-                holder.cardVerse.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
-                holder.cardVerse.setCardBackgroundColor(Color.parseColor("#E0F7FA")) // Light Cyan tint
+                // Currently Pending Selection (Cyan)
+                holder.cardVerse?.strokeColor = Color.parseColor("#00BCD4") 
+                holder.cardVerse?.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
+                holder.cardVerse?.setCardBackgroundColor(Color.parseColor("#E0F7FA")) 
+            } else if (preselectedVerses.contains(verseRef)) {
+                // Already In Comparison (Light Grey / Disabled look)
+                holder.cardVerse?.strokeColor = Color.parseColor("#BDBDBD") // Grey stroke
+                holder.cardVerse?.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
+                holder.cardVerse?.setCardBackgroundColor(Color.parseColor("#F5F5F5")) // Very light grey
             } else {
-                holder.cardVerse.strokeColor = Color.parseColor("#E0E0E0")
-                holder.cardVerse.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
-                holder.cardVerse.setCardBackgroundColor(Color.WHITE)
+                // Normal
+                holder.cardVerse?.strokeColor = Color.parseColor("#E0E0E0")
+                holder.cardVerse?.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
+                holder.cardVerse?.setCardBackgroundColor(Color.WHITE)
             }
 
             // 2. Shared Click Logic
@@ -106,7 +127,7 @@ class VerseAdapter(
             }
 
             // Apply to EVERYTHING
-            holder.cardVerse.setOnClickListener(onVerseClick)
+            holder.cardVerse?.setOnClickListener(onVerseClick)
             holder.itemView.setOnClickListener(onVerseClick)
             holder.tvVerseText.setOnClickListener(onVerseClick)
             holder.flNoteContainer.setOnClickListener(onVerseClick) // Even the empty container
@@ -132,10 +153,10 @@ class VerseAdapter(
 
         } else {
             // --- NORMAL MODE ---
-            holder.cardVerse.strokeColor = Color.parseColor("#E0E0E0")
-            holder.cardVerse.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
-            holder.cardVerse.setCardBackgroundColor(Color.WHITE)
-            holder.cardVerse.setOnClickListener(null)
+            holder.cardVerse?.strokeColor = Color.parseColor("#E0E0E0")
+            holder.cardVerse?.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
+            holder.cardVerse?.setCardBackgroundColor(Color.WHITE)
+            holder.cardVerse?.setOnClickListener(null)
             holder.flNoteContainer.visibility = View.VISIBLE
 
             val fullString = "${verse.verse} ${verse.text}"
