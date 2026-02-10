@@ -10,9 +10,29 @@ class ComparisonSelectionActivity : BaseActivity() {
         setContentView(R.layout.activity_comparison_selection)
 
         val btnCreationAccounts = findViewById<Button>(R.id.btnCreationAccounts)
+        val btnCallingOfNoah = findViewById<Button>(R.id.btnCallingOfNoah)
 
         btnCreationAccounts.setOnClickListener {
+            val config = ComparisonConfig(
+                title = "Creation Accounts",
+                filename = "creationAccountsComparison.json",
+                source1Name = "Genesis",
+                source2Name = "Moses"
+            )
             val intent = Intent(this, CreationComparisonActivity::class.java)
+            intent.putExtra("config", config)
+            startActivity(intent)
+        }
+
+        btnCallingOfNoah.setOnClickListener {
+            val config = ComparisonConfig(
+                title = "The Calling of Noah",
+                filename = "ScriptureSideBySide-TheCallingOfNoah.json",
+                source1Name = "Genesis",
+                source2Name = "Moses"
+            )
+            val intent = Intent(this, CreationComparisonActivity::class.java)
+            intent.putExtra("config", config)
             startActivity(intent)
         }
     }

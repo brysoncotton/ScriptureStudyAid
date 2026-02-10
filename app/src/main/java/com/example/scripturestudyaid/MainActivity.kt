@@ -2,6 +2,8 @@ package com.example.scripturestudyaid
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -126,7 +128,7 @@ class MainActivity : BaseActivity() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     0 -> Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
-                    1 -> Toast.makeText(this, "Bookmarks", Toast.LENGTH_SHORT).show()
+                    1 -> showBookmarksDialog()
                     2 -> Toast.makeText(this, "About", Toast.LENGTH_SHORT).show()
                 }
                 true
@@ -266,6 +268,9 @@ class MainActivity : BaseActivity() {
                  )
                  rvVerses.adapter = verseAdapter
                  rvVerses.layoutManager = LinearLayoutManager(this)
+                 
+                 // Add swipe gesture detection for chapter navigation
+                 setupSwipeGesture(rvVerses)
             }
         }
     }
@@ -420,6 +425,167 @@ class MainActivity : BaseActivity() {
         updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
 
         Toast.makeText(this, "Navigated to ${result.book} ${result.chapter}:${result.verse}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showBookmarksDialog() {
+        val bookmarks = AnnotationRepository.getAllBookmarks(this)
+        
+        if (bookmarks.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Bookmarks")
+                .setMessage("No bookmarks saved yet.\n\nTap the bookmark icon to save your current chapter.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+        
+        val bookmarkStrings = bookmarks.map { bookmark ->
+            "${bookmark.volume} - ${bookmark.book} ${bookmark.chapter}"
+        }.toTypedArray()
+        
+        AlertDialog.Builder(this)
+            .setTitle("Bookmarks (${bookmarks.size})")
+            .setItems(bookmarkStrings) { _, which ->
+                val bookmark = bookmarks[which]
+                showBookmarkOptionsDialog(bookmark)
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+    
+    private fun showBookmarkOptionsDialog(bookmark: Bookmark) {
+        val message = "${bookmark.volume}\n${bookmark.book} ${bookmark.chapter}"
+        
+        AlertDialog.Builder(this)
+            .setTitle("Bookmark")
+            .setMessage(message)
+            .setPositiveButton("Go to Chapter") { _, _ ->
+                navigateToBookmark(bookmark)
+            }
+            .setNegativeButton("Delete") { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle("Delete Bookmark?")
+                    .setMessage("Remove this bookmark?")
+                    .setPositiveButton("Delete") { _, _ ->
+                        AnnotationRepository.deleteBookmark(this, bookmark.id)
+                        Toast.makeText(this, "Bookmark deleted", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+            .setNeutralButton("Cancel", null)
+            .show()
+    }
+    
+    private fun navigateToBookmark(bookmark: Bookmark) {
+        // Load the volume if different
+        if (bookmark.volume != currentVolumeName) {
+            currentVolumeName = bookmark.volume
+            loadScriptures(volumes[currentVolumeName]!!)
+        }
+        
+        // Find the book index
+        currentBookIndex = bibleData.books.indexOfFirst { it.book == bookmark.book }
+        if (currentBookIndex == -1) {
+            Toast.makeText(this, "Book not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // Find the chapter index
+        currentChapterIndex = bibleData.books[currentBookIndex].chapters.indexOfFirst {
+            it.chapter == bookmark.chapter
+        }
+        if (currentChapterIndex == -1) {
+            Toast.makeText(this, "Chapter not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // Update the toolbar and verses
+        val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+        val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+        updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+        
+        Toast.makeText(this, "Navigated to ${bookmark.book} ${bookmark.chapter}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun setupSwipeGesture(recyclerView: RecyclerView) {
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                
+                val diffX = e2.x - e1.x
+                val diffY = e2.y - e1.y
+                
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffX > 0) {
+                            // Swipe right - go to previous chapter
+                            goToPreviousChapter()
+                        } else {
+                            // Swipe left - go to next chapter
+                            goToNextChapter()
+                        }
+                        return true
+                    }
+                }
+                return false
+            }
+        })
+        
+        recyclerView.setOnTouchListener { v, event ->
+            gestureDetector.onTouchEvent(event)
+            false // Allow RecyclerView to handle scrolling
+        }
+    }
+    
+    private fun goToNextChapter() {
+        // Try to go to next chapter in current book
+        if (currentChapterIndex < bibleData.books[currentBookIndex].chapters.size - 1) {
+            currentChapterIndex++
+        } else if (currentBookIndex < bibleData.books.size - 1) {
+            // Go to first chapter of next book
+            currentBookIndex++
+            currentChapterIndex = 0
+        } else {
+            Toast.makeText(this, "Last chapter in ${currentVolumeName}", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+        val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+        updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+        
+        // Scroll to top
+        findViewById<RecyclerView>(R.id.rvVerses).scrollToPosition(0)
+    }
+    
+    private fun goToPreviousChapter() {
+        // Try to go to previous chapter in current book
+        if (currentChapterIndex > 0) {
+            currentChapterIndex--
+        } else if (currentBookIndex > 0) {
+            // Go to last chapter of previous book
+            currentBookIndex--
+            currentChapterIndex = bibleData.books[currentBookIndex].chapters.size - 1
+        } else {
+            Toast.makeText(this, "First chapter in ${currentVolumeName}", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+        val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+        updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+        
+        // Scroll to top
+        findViewById<RecyclerView>(R.id.rvVerses).scrollToPosition(0)
     }
 
     data class SearchResult(val volume: String, val book: String, val chapter: Int, val verse: Int, val verseText: String)

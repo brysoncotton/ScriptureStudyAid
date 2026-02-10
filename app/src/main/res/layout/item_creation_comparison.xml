@@ -2,71 +2,66 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="8dp"
-    android:background="@drawable/border_bottom">
+    android:baselineAligned="false">
 
-    <TextView
-        android:id="@+id/tvVerseNum"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Verse 1"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
-
+    <!-- Source 1 (Left) -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:baselineAligned="false">
-
-        <LinearLayout
-            android:layout_width="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="@drawable/bg_comparison_cell"
+        android:layout_marginEnd="4dp">
+        
+        <TextView
+            android:id="@+id/tvSource1Verse"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingEnd="4dp">
+            android:textStyle="bold"
+            android:text="Gen 1:1"
+            android:textColor="@color/primary_blue"
+            android:gravity="start"
+            android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Genesis"
-                android:textStyle="italic"
-                android:textColor="@color/primary_blue"/>
-
-            <TextView
-                android:id="@+id/tvGenesis"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Genesis text will go here..."/>
-        </LinearLayout>
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="#CCCCCC"/>
-
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvSource1Text"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingStart="4dp">
+            android:text="In the beginning..."
+            android:textColor="@android:color/black"
+            android:textSize="14sp"/>
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Moses"
-                android:textStyle="italic"
-                android:textColor="@color/secondary_gold"/>
+    <!-- Source 2 (Right) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="@drawable/bg_comparison_cell"
+        android:layout_marginStart="4dp">
+        
+        <TextView
+            android:id="@+id/tvSource2Verse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="Mos 2:1"
+            android:textColor="@color/secondary_gold"
+            android:gravity="start"
+            android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:id="@+id/tvMoses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Moses text will go here..."/>
-        </LinearLayout>
-
+        <TextView
+            android:id="@+id/tvSource2Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="And it came to pass..."
+            android:textColor="@android:color/black"
+            android:textSize="14sp"/>
     </LinearLayout>
 
 </LinearLayout>
