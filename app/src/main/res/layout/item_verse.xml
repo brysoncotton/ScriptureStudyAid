@@ -1,24 +1,49 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardVerse"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:baselineAligned="false">
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:descendantFocusability="blocksDescendants">
 
-    <TextView
-        android:id="@+id/tvVerseText"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:textSize="18sp"
-        android:lineSpacingExtra="4dp"
-        android:textColor="#212121"
-        android:textIsSelectable="true" />
+        android:orientation="horizontal"
+        android:baselineAligned="false"
+        android:clickable="false"
+        android:focusable="false">
 
-    <FrameLayout
-        android:id="@+id/flNoteContainer"
-        android:layout_width="40dp"
-        android:layout_height="match_parent"
-        android:background="#FAFAFA" />
+        <TextView
+            android:id="@+id/tvVerseText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#212121"
+            android:textIsSelectable="false"
+            android:clickable="false"
+            android:focusable="false" />
 
-</LinearLayout>
+        <FrameLayout
+            android:id="@+id/flNoteContainer"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="#FAFAFA"
+            android:clickable="false"
+            android:focusable="false" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

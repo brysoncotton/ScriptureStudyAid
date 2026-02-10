@@ -13,5 +13,6 @@ data class ComparisonConfig(
     val title: String,
     val filename: String,
     val source1Name: String, // e.g., "Genesis"
-    val source2Name: String  // e.g., "Moses"
+    val source2Name: String, // e.g., "Moses"
+    val customComparisonId: String? = null
 ) : Serializable

@@ -35,6 +35,7 @@ class VerseAdapter(
     private var filteredVerses: List<Verse> = verses
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val cardVerse: com.google.android.material.card.MaterialCardView = view.findViewById(R.id.cardVerse)
         val tvVerseText: TextView = view.findViewById(R.id.tvVerseText)
         val flNoteContainer: FrameLayout = view.findViewById(R.id.flNoteContainer)
         var actionPopup: PopupWindow? = null // Track popup to prevent orphaned instances
@@ -52,6 +53,21 @@ class VerseAdapter(
         notifyDataSetChanged()
     }
 
+    private var selectionMode: Boolean = false
+    private var selectedVerseRef: Int? = null
+    private var onVerseSelected: ((Verse) -> Unit)? = null
+
+    fun setSelectionMode(enabled: Boolean, onSelected: (Verse) -> Unit) {
+        this.selectionMode = enabled
+        this.onVerseSelected = onSelected
+        notifyDataSetChanged()
+    }
+
+    fun setSelectedVerse(verseNum: Int?) {
+        this.selectedVerseRef = verseNum
+        notifyDataSetChanged()
+    }
+
     override fun getItemCount(): Int = filteredVerses.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -62,133 +78,196 @@ class VerseAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val verse = filteredVerses[position]
         val context = holder.itemView.context
-        val fullString = "${verse.verse} ${verse.text}"
-        val spannable = SpannableString(fullString)
 
-        // Set the verse number to superscript
-        val endOfNum = verse.verse.toString().length
-        spannable.setSpan(SuperscriptSpan(), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannable.setSpan(RelativeSizeSpan(0.7f), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        if (selectionMode) {
+            // --- SELECTION MODE ---
+            
+            // 1. Bubble Highlight (Stroke Change on Card)
+            if (verse.verse == selectedVerseRef) {
+                holder.cardVerse.strokeColor = Color.parseColor("#00BCD4") // Cyan
+                holder.cardVerse.strokeWidth = (2 * context.resources.displayMetrics.density).toInt()
+                holder.cardVerse.setCardBackgroundColor(Color.parseColor("#E0F7FA")) // Light Cyan tint
+            } else {
+                holder.cardVerse.strokeColor = Color.parseColor("#E0E0E0")
+                holder.cardVerse.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
+                holder.cardVerse.setCardBackgroundColor(Color.WHITE)
+            }
 
-        // Load notes first (they take priority for clicks)
-        val notes = NotesRepository.getAllNotes(context).filter {
-            it.volume == volumeName && it.book == bookName && 
-            it.chapter == chapterNum && it.verse == verse.verse
-        }
-        
-        // Load highlights and apply them with clickable spans
-        val highlights = AnnotationRepository.getHighlightsForVerse(context, volumeName, bookName, chapterNum, verse.verse)
-        for (highlight in highlights) {
-            val start = highlight.selectionStart.coerceIn(0, fullString.length)
-            val end = highlight.selectionEnd.coerceIn(0, fullString.length)
-            if (start < end) {
-                // Add background color
-                spannable.setSpan(BackgroundColorSpan(highlight.color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                
-                // Add clickable span to show highlight dialog
-                val clickableSpan = object : android.text.style.ClickableSpan() {
-                    override fun onClick(widget: View) {
-                        showViewHighlightDialog(context, highlight, verse) {
-                            val pos = holder.adapterPosition
-                            if (pos != RecyclerView.NO_POSITION) {
-                                notifyItemChanged(pos)
+            // 2. Shared Click Logic
+            val onVerseClick = View.OnClickListener {
+                if (selectedVerseRef == verse.verse) {
+                    selectedVerseRef = null
+                    onVerseSelected?.invoke(verse.copy(verse = -1))
+                } else {
+                    selectedVerseRef = verse.verse
+                    onVerseSelected?.invoke(verse)
+                }
+                notifyDataSetChanged()
+            }
+
+            // Apply to EVERYTHING
+            holder.cardVerse.setOnClickListener(onVerseClick)
+            holder.itemView.setOnClickListener(onVerseClick)
+            holder.tvVerseText.setOnClickListener(onVerseClick)
+            holder.flNoteContainer.setOnClickListener(onVerseClick) // Even the empty container
+
+
+            // 3. Simple Text Display (No Spans, No Selectable)
+            val fullString = "${verse.verse} ${verse.text}"
+            val spannable = SpannableString(fullString)
+            val endOfNum = verse.verse.toString().length
+            spannable.setSpan(SuperscriptSpan(), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(RelativeSizeSpan(0.7f), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            
+            holder.tvVerseText.text = spannable
+            holder.tvVerseText.movementMethod = null // Disable clickable spans
+            holder.tvVerseText.setTextIsSelectable(false) // Disable text selection
+            holder.tvVerseText.setOnLongClickListener(null) // Disable long press menu
+            holder.tvVerseText.isClickable = false
+            holder.tvVerseText.isFocusable = false
+            
+            // 4. Hide Icons
+            holder.flNoteContainer.removeAllViews()
+            holder.flNoteContainer.visibility = View.GONE
+
+        } else {
+            // --- NORMAL MODE ---
+            holder.cardVerse.strokeColor = Color.parseColor("#E0E0E0")
+            holder.cardVerse.strokeWidth = (1 * context.resources.displayMetrics.density).toInt()
+            holder.cardVerse.setCardBackgroundColor(Color.WHITE)
+            holder.cardVerse.setOnClickListener(null)
+            holder.flNoteContainer.visibility = View.VISIBLE
+
+            val fullString = "${verse.verse} ${verse.text}"
+            val spannable = SpannableString(fullString)
+
+            // Set the verse number to superscript
+            val endOfNum = verse.verse.toString().length
+            spannable.setSpan(SuperscriptSpan(), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(RelativeSizeSpan(0.7f), 0, endOfNum, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            // Load notes first (they take priority for clicks)
+            val notes = NotesRepository.getAllNotes(context).filter {
+                it.volume == volumeName && it.book == bookName && 
+                it.chapter == chapterNum && it.verse == verse.verse
+            }
+            
+            // Load highlights and apply them with clickable spans
+            val highlights = AnnotationRepository.getHighlightsForVerse(context, volumeName, bookName, chapterNum, verse.verse)
+            for (highlight in highlights) {
+                val start = highlight.selectionStart.coerceIn(0, fullString.length)
+                val end = highlight.selectionEnd.coerceIn(0, fullString.length)
+                if (start < end) {
+                    // Add background color
+                    spannable.setSpan(BackgroundColorSpan(highlight.color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    
+                    // Add clickable span to show highlight dialog
+                    val clickableSpan = object : android.text.style.ClickableSpan() {
+                        override fun onClick(widget: View) {
+                            showViewHighlightDialog(context, highlight, verse) {
+                                val pos = holder.adapterPosition
+                                if (pos != RecyclerView.NO_POSITION) {
+                                    notifyItemChanged(pos)
+                                }
                             }
                         }
-                    }
-                    
-                    override fun updateDrawState(ds: android.text.TextPaint) {
-                        // Don't change text appearance for clickable highlights
-                        ds.isUnderlineText = false
-                    }
-                }
-                spannable.setSpan(clickableSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
-        }
-        
-        // Apply notes with clickable spans (these override highlights if overlapping)
-        for (note in notes) {
-            val start = note.selectionStart.coerceIn(0, fullString.length)
-            val end = note.selectionEnd.coerceIn(0, fullString.length)
-            if (start < end) {
-                // Add background color
-                spannable.setSpan(BackgroundColorSpan(note.color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                
-                // Add clickable span to show note dialog
-                val clickableSpan = object : android.text.style.ClickableSpan() {
-                    override fun onClick(widget: View) {
-                        showViewNoteDialog(context, note, verse) {
-                            val pos = holder.adapterPosition
-                            if (pos != RecyclerView.NO_POSITION) {
-                                notifyItemChanged(pos)
-                            }
+                        
+                        override fun updateDrawState(ds: android.text.TextPaint) {
+                            // Don't change text appearance for clickable highlights
+                            ds.isUnderlineText = false
                         }
                     }
-                    
-                    override fun updateDrawState(ds: android.text.TextPaint) {
-                        // Don't change text appearance for clickable notes
-                        ds.isUnderlineText = false
-                    }
+                    spannable.setSpan(clickableSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
-                spannable.setSpan(clickableSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
-        }
-
-        holder.tvVerseText.movementMethod = android.text.method.LinkMovementMethod.getInstance()
-        holder.tvVerseText.setTextIsSelectable(true)
-        holder.tvVerseText.setText(spannable, TextView.BufferType.SPANNABLE)
-
-        // Clear previous annotation icons
-        holder.flNoteContainer.removeAllViews()
-
-        // Post to ensure layout is ready for line calculation
-        holder.tvVerseText.post {
-            if (holder.tvVerseText.layout != null) {
-                renderAnnotationIcons(context, holder, verse)
+            
+            // Apply notes with clickable spans (these override highlights if overlapping)
+            for (note in notes) {
+                val start = note.selectionStart.coerceIn(0, fullString.length)
+                val end = note.selectionEnd.coerceIn(0, fullString.length)
+                if (start < end) {
+                    // Add background color
+                    spannable.setSpan(BackgroundColorSpan(note.color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    
+                    // Add clickable span to show note dialog
+                    val clickableSpan = object : android.text.style.ClickableSpan() {
+                        override fun onClick(widget: View) {
+                            showViewNoteDialog(context, note, verse) {
+                                val pos = holder.adapterPosition
+                                if (pos != RecyclerView.NO_POSITION) {
+                                    notifyItemChanged(pos)
+                                }
+                            }
+                        }
+                        
+                        override fun updateDrawState(ds: android.text.TextPaint) {
+                            // Don't change text appearance for clickable notes
+                            ds.isUnderlineText = false
+                        }
+                    }
+                    spannable.setSpan(clickableSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
             }
-        }
 
-        // Dismiss any previous popup when rebinding
-        holder.actionPopup?.dismiss()
-        holder.actionPopup = null
+            holder.tvVerseText.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+            holder.tvVerseText.setTextIsSelectable(true)
+            holder.tvVerseText.setText(spannable, TextView.BufferType.SPANNABLE)
+            holder.tvVerseText.isClickable = true
+            holder.tvVerseText.isFocusable = true
 
-        // Show action bar on long press, independent of text selection system
-        holder.tvVerseText.setOnLongClickListener {
-            // Dismiss any existing popup first
+            // Clear previous annotation icons
+            holder.flNoteContainer.removeAllViews()
+
+            // Post to ensure layout is ready for line calculation
+            holder.tvVerseText.post {
+                if (holder.tvVerseText.layout != null) {
+                    renderAnnotationIcons(context, holder, verse)
+                }
+            }
+
+            // Dismiss any previous popup when rebinding
             holder.actionPopup?.dismiss()
-            
-            // Show the action bar immediately
-            holder.tvVerseText.postDelayed({
-                if (holder.tvVerseText.hasSelection()) {
-                    val selStart = holder.tvVerseText.selectionStart
-                    val selEnd = holder.tvVerseText.selectionEnd
-                    if (selStart != -1 && selEnd != -1 && selStart != selEnd) {
-                        holder.actionPopup = showCustomActionPopup(context, holder, verse, selStart, selEnd, null)
+            holder.actionPopup = null
+
+            // Show action bar on long press, independent of text selection system
+            holder.tvVerseText.setOnLongClickListener {
+                // Dismiss any existing popup first
+                holder.actionPopup?.dismiss()
+                
+                // Show the action bar immediately
+                holder.tvVerseText.postDelayed({
+                    if (holder.tvVerseText.hasSelection()) {
+                        val selStart = holder.tvVerseText.selectionStart
+                        val selEnd = holder.tvVerseText.selectionEnd
+                        if (selStart != -1 && selEnd != -1 && selStart != selEnd) {
+                            holder.actionPopup = showCustomActionPopup(context, holder, verse, selStart, selEnd, null)
+                        }
                     }
-                }
-            }, 100) // Small delay to ensure selection is established
+                }, 100) // Small delay to ensure selection is established
+                
+                false // Don't consume the event - let default selection happen
+            }
             
-            false // Don't consume the event - let default selection happen
-        }
-        
-        // Also allow default text selection behavior
-        holder.tvVerseText.customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
-            override fun onCreateActionMode(mode: android.view.ActionMode?, menu: android.view.Menu?): Boolean {
-                // Hide the default menu
-                menu?.clear()
-                return true
-            }
+            // Also allow default text selection behavior
+            holder.tvVerseText.customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+                override fun onCreateActionMode(mode: android.view.ActionMode?, menu: android.view.Menu?): Boolean {
+                    // Hide the default menu
+                    menu?.clear()
+                    return true
+                }
 
-            override fun onPrepareActionMode(mode: android.view.ActionMode?, menu: android.view.Menu?): Boolean {
-                menu?.clear()
-                return true
-            }
+                override fun onPrepareActionMode(mode: android.view.ActionMode?, menu: android.view.Menu?): Boolean {
+                    menu?.clear()
+                    return true
+                }
 
-            override fun onActionItemClicked(mode: android.view.ActionMode?, item: android.view.MenuItem?): Boolean {
-                return false
-            }
+                override fun onActionItemClicked(mode: android.view.ActionMode?, item: android.view.MenuItem?): Boolean {
+                    return false
+                }
 
-            override fun onDestroyActionMode(mode: android.view.ActionMode?) {
-                // Don't dismiss popup here - keep it independent
+                override fun onDestroyActionMode(mode: android.view.ActionMode?) {
+                    // Don't dismiss popup here - keep it independent
+                }
             }
         }
     }

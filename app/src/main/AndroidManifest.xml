@@ -33,6 +33,9 @@
             android:exported="false" />
             
         <activity android:name=".CreationComparisonActivity" />
+        <activity android:name=".CustomComparisonEditorActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".VerseSelectorActivity" />
     </application>
 
 </manifest>

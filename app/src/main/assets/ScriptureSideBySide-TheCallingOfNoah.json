@@ -9,7 +9,7 @@
     "Source 1 Verse": "Genesis 6:1",
     "Genesis": "And it came to pass, when men began to multiply on the face of the earth, and daughters were born unto them,",
     "Source 2 Verse": "Moses 8:14a",
-    "Moses": "And when these men began to multiply on the face of the earth, and daughters were born unto them,[...]"
+    "Moses": "And when these men began to multiply on the face of the earth, and daughters were born unto them, [...]"
   },
   {
     "Source 1 Verse": "Genesis 6:2",
@@ -92,20 +92,20 @@
   {
     "Source 1 Verse": "Genesis 6:8",
     "Genesis": "But Noah found grace in the eyes of the Lord.",
-    "Source 2 Verse": "Moses 8:27",
-    "Moses": "And thus Noah found grace in the eyes of the Lord; for Noah was a just man, and perfect in his generation; and he walked with God, as did also his three sons, Shem, Ham, and Japheth."
+    "Source 2 Verse": "Moses 8:27a",
+    "Moses": "And thus Noah found grace in the eyes of the Lord; [...]"
   },
   {
     "Source 1 Verse": "Genesis 6:9",
     "Genesis": "These are the generations of Noah: Noah was a just man and perfect in his generations, and Noah walked with God.",
-    "Source 2 Verse": "",
-    "Moses": "<italic>[This version uses different verse boundaries than other versions.] </italic>"
+    "Source 2 Verse": "Moses 8:27b",
+    "Moses": "[...] for Noah was a just man, and perfect in his generation; and he walked with God, [...]"
   },
   {
     "Source 1 Verse": "Genesis 6:10",
     "Genesis": "And Noah begat three sons, Shem, Ham, and Japheth.",
-    "Source 2 Verse": "",
-    "Moses": "<italic>[This version uses different verse boundaries than other versions.] </italic>"
+    "Source 2 Verse": "Moses 8:27c",
+    "Moses": "[...] as did also his three sons, Shem, Ham, and Japheth."
   },
   {
     "Source 1 Verse": "Genesis 6:11",
