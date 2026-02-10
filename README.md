@@ -3,7 +3,7 @@
 Follow these steps to install the application manually using the `.apk` file.
 
 ### 1. Download the APK
-Download the latest `.apk` file from the **Releases** section of this repository directly onto your Android device.
+Download the latest `.apk` file from the **[Releases](https://github.com/brysoncotton/ScriptureStudyAid/releases)** section of this repository directly onto your Android device.
 
 ### 2. Disable Samsung "Auto Blocker" (Samsung Devices Only)
 If you are using a modern Samsung Galaxy device (One UI 6.0+), you must temporarily disable the **Auto Blocker** security feature:
