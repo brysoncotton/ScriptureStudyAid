@@ -34,4 +34,4 @@ To keep your device secure, it is recommended to:
 ### 🛠️ Troubleshooting and Feedback
 * **"App not installed":** This often happens if an existing version of the app is already installed. Uninstall any previous versions before trying again.
 * **"There was a problem parsing the package":** The download may be corrupted. Try downloading the APK again.
-* **Please report all bugs, feature requests, [here](https://github.com/brysoncotton/ScriptureStudyAid/issues) on github to speed along development
+* **Please report all bugs, feature requests, [here](https://github.com/brysoncotton/ScriptureStudyAid/issues) on github to speed along development!**
