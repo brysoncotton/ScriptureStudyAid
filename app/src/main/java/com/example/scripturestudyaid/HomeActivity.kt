@@ -15,6 +15,7 @@ class HomeActivity : BaseActivity() {
 
         val btnReadScriptures = findViewById<Button>(R.id.btnReadScriptures)
         val btnCompare = findViewById<Button>(R.id.btnCompare)
+        val btnAdvancedSearch = findViewById<Button>(R.id.btnAdvancedSearch)
         val btnSettings = findViewById<Button>(R.id.btnSettings)
 
         btnReadScriptures.setOnClickListener {
@@ -24,6 +25,11 @@ class HomeActivity : BaseActivity() {
 
         btnCompare.setOnClickListener {
             val intent = Intent(this, ComparisonSelectionActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnAdvancedSearch.setOnClickListener {
+            val intent = Intent(this, AdvancedSearchActivity::class.java)
             startActivity(intent)
         }
 
@@ -52,7 +58,7 @@ class HomeActivity : BaseActivity() {
         
         AlertDialog.Builder(this)
             .setTitle("Update Available")
-            .setMessage("A new version of Scripture Study Aid is available ($latestVersion).\n\nProceed to github to download the latest version?")
+            .setMessage("A new version of Scripture Study Aid is available ($latestVersion).\n\nDo you want to proceed to Github to download the latest version?")
             .setPositiveButton("Update") { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
                 startActivity(intent)

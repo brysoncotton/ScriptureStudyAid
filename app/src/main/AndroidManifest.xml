@@ -38,6 +38,8 @@
         <activity android:name=".CustomComparisonEditorActivity"
             android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".VerseSelectorActivity" />
+        <activity android:name=".AdvancedSearchActivity" 
+            android:windowSoftInputMode="adjustResize"/>
     </application>
 
 </manifest>

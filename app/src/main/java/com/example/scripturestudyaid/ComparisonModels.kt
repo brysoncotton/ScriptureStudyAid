@@ -16,3 +16,11 @@ data class ComparisonConfig(
     val source2Name: String, // e.g., "Moses"
     val customComparisonId: String? = null
 ) : Serializable
+
+data class SearchResult(
+    val volume: String,
+    val book: String,
+    val chapter: Int,
+    val verse: Int,
+    val verseText: String
+)

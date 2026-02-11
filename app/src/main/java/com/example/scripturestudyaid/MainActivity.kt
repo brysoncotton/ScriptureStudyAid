@@ -56,6 +56,10 @@ class MainActivity : BaseActivity() {
         val tvSearchScope = findViewById<TextView>(R.id.tvSearchScope)
 
         loadScriptures(volumes[currentVolumeName]!!)
+        
+        // Handle incoming intent for navigation
+        handleNavigationIntent(intent)
+        
         updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
 
         // Back button - navigate to home screen
@@ -124,12 +128,16 @@ class MainActivity : BaseActivity() {
             val popup = PopupMenu(this, view)
             popup.menu.add(0, 0, 0, "Settings")
             popup.menu.add(0, 1, 1, "View Bookmarks")
-            popup.menu.add(0, 2, 2, "About")
+            popup.menu.add(0, 3, 2, "Advanced Search")
+            popup.menu.add(0, 2, 3, "About")
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     0 -> Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
                     1 -> showBookmarksDialog()
                     2 -> Toast.makeText(this, "About", Toast.LENGTH_SHORT).show()
+                    3 -> {
+                        startActivity(Intent(this, AdvancedSearchActivity::class.java))
+                    }
                 }
                 true
             }
@@ -635,5 +643,51 @@ class MainActivity : BaseActivity() {
             .start()
     }
 
-    data class SearchResult(val volume: String, val book: String, val chapter: Int, val verse: Int, val verseText: String)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent?.let { handleNavigationIntent(it) }
+    }
+
+    private fun handleNavigationIntent(intent: Intent) {
+        val targetBook = intent.getStringExtra("EXTRA_BOOK")
+        val targetChapter = intent.getIntExtra("EXTRA_CHAPTER", -1)
+
+        if (targetBook != null && targetChapter != -1) {
+            // Find the volume containing this book
+            // Optimistically check current volume first
+            var found = false
+            if (bibleData.books.any { it.book == targetBook }) {
+                found = true
+            } else {
+                // Search other volumes
+                for ((volName, fileName) in volumes) {
+                    val volumeData = JsonUtils.getScriptures(this, fileName)
+                    if (volumeData?.books?.any { it.book == targetBook } == true) {
+                        currentVolumeName = volName
+                        loadScriptures(fileName) // Sets bibleData
+                        found = true
+                        break
+                    }
+                }
+            }
+
+            if (found) {
+                // Find book index
+                currentBookIndex = bibleData.books.indexOfFirst { it.book == targetBook }
+                if (currentBookIndex != -1) {
+                    // Find chapter index
+                    currentChapterIndex = bibleData.books[currentBookIndex].chapters.indexOfFirst { it.chapter == targetChapter }
+                    if (currentChapterIndex == -1) currentChapterIndex = 0 // Default to first if not found
+                    
+                    // Update UI
+                    val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
+                    val tvToolbarSubtitle = findViewById<TextView>(R.id.tvToolbarSubtitle)
+                    if (tvToolbarTitle != null && tvToolbarSubtitle != null) {
+                         updateToolbarText(tvToolbarTitle, tvToolbarSubtitle)
+                    }
+                }
+            }
+        }
+    }
 }

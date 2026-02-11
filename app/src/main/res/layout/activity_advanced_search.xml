@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Advanced Search"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+        
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Frequency"/>
+            
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Proximity"/>
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- Frequency View -->
+    <LinearLayout
+        android:id="@+id/layoutFrequency"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="top">
+            
+            <EditText
+                android:id="@+id/etFrequencyQuery"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Enter word(s) (e.g. 'Faith, Works')"
+                android:inputType="text"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginStart="8dp">
+
+                <Button
+                    android:id="@+id/btnFrequencySearch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Analyze"/>
+
+                <ToggleButton
+                    android:id="@+id/toggleChartMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:textOn="Grouped"
+                    android:textOff="Stacked"
+                    android:textSize="12sp"
+                    android:checked="false"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="20dp"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
+            
+            <com.example.scripturestudyaid.FrequencyChartView
+                android:id="@+id/frequencyChart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F0F0F0"/>
+        </ScrollView>
+
+    </LinearLayout>
+
+    <!-- Proximity View -->
+    <LinearLayout
+        android:id="@+id/layoutProximity"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+        
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            
+            <EditText
+                android:id="@+id/etTerm1"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Term 1 (e.g. Atonement)"/>
+                
+            <EditText
+                android:id="@+id/etTerm2"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Term 2 (e.g. Joy)"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Distance: "/>
+            
+            <TextView
+                android:id="@+id/tvDistanceValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10"
+                android:textStyle="bold"
+                android:paddingEnd="16dp"/>
+                
+            <SeekBar
+                android:id="@+id/seekBarDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="50"
+                android:progress="10"
+                android:min="1"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnProximitySearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Find Similarities"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvProximityResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+</LinearLayout>
