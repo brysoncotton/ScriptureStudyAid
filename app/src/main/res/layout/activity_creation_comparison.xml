@@ -5,9 +5,9 @@
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/tvComparisonTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Creation Accounts Comparison"
         android:textSize="20sp"
         android:textStyle="bold"
         android:padding="16dp"

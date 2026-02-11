@@ -3,6 +3,7 @@ package com.example.scripturestudyaid
 import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
 
 class CreationComparisonActivity : BaseActivity() {
 
@@ -16,10 +17,8 @@ class CreationComparisonActivity : BaseActivity() {
             return
         }
 
-        // Set title if you have a toolbar, or just use the config title
-        // For now, let's assume we might want to set the title on the toolbar if it exists
-        // val tvToolbarTitle = findViewById<TextView>(R.id.tvToolbarTitle)
-        // tvToolbarTitle.text = config.title
+        val tvComparisonTitle = findViewById<TextView>(R.id.tvComparisonTitle)
+        tvComparisonTitle.text = config.title
 
         val comparisonData = if (config.customComparisonId != null) {
             val customComparisons = CustomComparisonRepository.getComparisons(this)

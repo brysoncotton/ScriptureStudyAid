@@ -62,5 +62,18 @@ class SettingsActivity : AppCompatActivity() { // Not extending BaseActivity to 
             Toast.makeText(this, "Settings Saved", Toast.LENGTH_SHORT).show()
             finish() // Close settings to return to previous screen which should reload theme
         }
+
+        // GitHub Links
+        findViewById<Button>(R.id.btnViewSource).setOnClickListener {
+            val url = "https://github.com/brysoncotton/ScriptureStudyAid"
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            startActivity(intent)
+        }
+
+        findViewById<Button>(R.id.btnReportIssue).setOnClickListener {
+            val url = "https://github.com/brysoncotton/ScriptureStudyAid/issues"
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            startActivity(intent)
+        }
     }
 }
