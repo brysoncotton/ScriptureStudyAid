@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
+import androidx.appcompat.app.AlertDialog
 
 class HomeActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,5 +31,33 @@ class HomeActivity : BaseActivity() {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
+
+        checkForUpdates()
+    }
+
+    private fun checkForUpdates() {
+        val currentVersion = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0"
+        } catch (e: Exception) {
+            "1.0"
+        }
+
+        GithubUpdateChecker.checkForUpdate(currentVersion) { latestVersion, updateUrl ->
+            showUpdateDialog(latestVersion, updateUrl)
+        }
+    }
+
+    private fun showUpdateDialog(latestVersion: String, updateUrl: String) {
+        if (isFinishing || isDestroyed) return
+        
+        AlertDialog.Builder(this)
+            .setTitle("Update Available")
+            .setMessage("A new version of Scripture Study Aid is available ($latestVersion).\n\nProceed to github to download the latest version?")
+            .setPositiveButton("Update") { _, _ ->
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
